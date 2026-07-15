@@ -20,7 +20,7 @@ public class ProductControllerRA {
 
     private String clientUsername, clientPassword, adminUsername, adminPassword;
     private String clientToken, adminToken, invalidToken;
-    private Long existingProductId, nonExistingProductId;
+    private Long existingProductId, nonExistingProductId, dependentProductId;
 
     private String productName;
     //Chave é String e valor é Object
@@ -54,10 +54,10 @@ public class ProductControllerRA {
         List<Map<String, Object>> categories = new ArrayList<>();
 
         Map<String, Object> category1 = new HashMap<>();
-        category1.put("id",2);
+        category1.put("id", 2);
 
         Map<String, Object> category2 = new HashMap<>();
-        category2.put("id",3);
+        category2.put("id", 3);
 
         categories.add(category1);
         categories.add(category2);
@@ -101,15 +101,15 @@ public class ProductControllerRA {
         given()
                 //Está passando o endpoint para testar
                 .get("/products/{id}", existingProductId)
-        .then()
-             //Verifica a resposta do serviço
-            .statusCode(200)
-            .body("id", is(2))
-            .body("name", equalTo("Smart TV"))
-            .body("imgUrl", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/2-big.jpg"))
-            .body("price", is(2190.0F))
-            .body("categories.id", hasItems(2, 3))
-            .body("categories.name", hasItems("Eletrônicos", "Computadores"));
+                .then()
+                //Verifica a resposta do serviço
+                .statusCode(200)
+                .body("id", is(2))
+                .body("name", equalTo("Smart TV"))
+                .body("imgUrl", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/2-big.jpg"))
+                .body("price", is(2190.0F))
+                .body("categories.id", hasItems(2, 3))
+                .body("categories.name", hasItems("Eletrônicos", "Computadores"));
     }
 
     /*Problema 2: Consultar produtos
@@ -123,47 +123,47 @@ public class ProductControllerRA {
 
     //1.	Busca paginada exibe listagem paginada quando campo nome não preenchido e checa se os produtos Macbook Pro e PC Gamer Tera estão contidos
     @Test
-    public void findAllShouldReturnPageProductsWhenProductNameIsEmpty(){
+    public void findAllShouldReturnPageProductsWhenProductNameIsEmpty() {
         given()
                 //Está passando o endpoint para testar
                 .get("/products?page=0")
-        .then()
-             .statusCode(200)
+                .then()
+                .statusCode(200)
                 //Verifica os nomes dos produtos
                 .body("content.name", hasItems("Macbook Pro", "PC Gamer Tera"));
     }
 
     //2.	Busca paginada filtra produtos por nome e exibe listagem paginada quando campo nome preenchidos
     @Test
-    public void findAllShouldReturnPageProductsWhenProductNameIsNotEmpty(){
+    public void findAllShouldReturnPageProductsWhenProductNameIsNotEmpty() {
         given()
-             //Está passando o endpoint para testar
-             .get("/products?name={productName}", productName)
-        .then()
-             //Verifica o status code
-             .statusCode(200)
-             //Verifica o id
-             .body("content.id[0]", is(3))
-             //Verifica o nome
-             .body("content.name[0]", equalTo("Macbook Pro"))
-             //Verifica o preço
-             .body("content.price[0]", is(1250.0F))
-             //Verifica a imagem
-             .body("content.imgUrl[0]", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/3-big.jpg"));
+                //Está passando o endpoint para testar
+                .get("/products?name={productName}", productName)
+                .then()
+                //Verifica o status code
+                .statusCode(200)
+                //Verifica o id
+                .body("content.id[0]", is(3))
+                //Verifica o nome
+                .body("content.name[0]", equalTo("Macbook Pro"))
+                //Verifica o preço
+                .body("content.price[0]", is(1250.0F))
+                //Verifica a imagem
+                .body("content.imgUrl[0]", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/3-big.jpg"));
 
     }
 
     //3.	Busca paginada filtra produtos de forma paginada e filtra produtos com preço maior que 2000.0
     @Test
-    public void findAllShouldReturnPagedProductsWithPriceGreaterThan2000(){
+    public void findAllShouldReturnPagedProductsWithPriceGreaterThan2000() {
         given()
-             //Está passando o endpoint para testar
-             .get("/products?size=25")
-        .then()
-             //Verifica o status code
-             .statusCode(200)
-             //Verifica os nomes dos produtos com o preço maior que 2000.0
-             .body("content.findAll {it.price > 2000}.name", hasItems("Smart TV", "PC Gamer Weed"));
+                //Está passando o endpoint para testar
+                .get("/products?size=25")
+                .then()
+                //Verifica o status code
+                .statusCode(200)
+                //Verifica os nomes dos produtos com o preço maior que 2000.0
+                .body("content.findAll {it.price > 2000}.name", hasItems("Smart TV", "PC Gamer Weed"));
     }
 
     /*Problema 3: Inserir produto
@@ -182,42 +182,42 @@ public class ProductControllerRA {
 
     //1.	Inserção de produto insere produto com dados válidos quando logado como admin
     @Test
-    public void insertShouldReturnProductCreatedWhenAdminLogged(){
-        //Criar o objeto JSON
-        JSONObject newProduct = new JSONObject(postProductInstance);
-
-        given()
-           //Definindo o cabeçalho da requisição
-           //Tipo da informação
-           .header("Content-type","application/json")
-           .header("Authorization","Bearer " + adminToken)
-           .body(newProduct.toString())
-           .contentType(ContentType.JSON)
-           .accept(ContentType.JSON)
-        .when()
-           //Está passando o endpoint para testar
-           .post("/products")
-        .then()
-           //Verificando a resposta da requisição
-           .statusCode(201)
-           .body("name", equalTo("Meu produto"))
-                .body("price", is(50.0F))
-                .body("imgUrl", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/1-big.jpg"))
-                .body("categories.id", hasItems(2,3));
-    }
-
-    //2.	Inserção de produto retorna 422 e mensagens customizadas com dados inválidos quando logado como admin e campo name for inválido
-    @Test
-    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndInvalidName(){
-        postProductInstance.put("name","ab");
+    public void insertShouldReturnProductCreatedWhenAdminLogged() {
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
 
         given()
                 //Definindo o cabeçalho da requisição
                 //Tipo da informação
-                .header("Content-type","application/json")
-                .header("Authorization","Bearer " + adminToken)
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .body(newProduct.toString())
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                //Está passando o endpoint para testar
+                .post("/products")
+                .then()
+                //Verificando a resposta da requisição
+                .statusCode(201)
+                .body("name", equalTo("Meu produto"))
+                .body("price", is(50.0F))
+                .body("imgUrl", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/1-big.jpg"))
+                .body("categories.id", hasItems(2, 3));
+    }
+
+    //2.	Inserção de produto retorna 422 e mensagens customizadas com dados inválidos quando logado como admin e campo name for inválido
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndInvalidName() {
+        postProductInstance.put("name", "ab");
+        //Criar o objeto JSON
+        JSONObject newProduct = new JSONObject(postProductInstance);
+
+        given()
+                //Definindo o cabeçalho da requisição
+                //Tipo da informação
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
                 .body(newProduct.toString())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -233,16 +233,16 @@ public class ProductControllerRA {
 
     //3.	Inserção de produto retorna 422 e mensagens customizadas com dados inválidos quando logado como admin e campo description for inválido
     @Test
-    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndInvalidDescription(){
-        postProductInstance.put("description","ab");
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndInvalidDescription() {
+        postProductInstance.put("description", "ab");
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
 
         given()
                 //Definindo o cabeçalho da requisição
                 //Tipo da informação
-                .header("Content-type","application/json")
-                .header("Authorization","Bearer " + adminToken)
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
                 .body(newProduct.toString())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -258,7 +258,7 @@ public class ProductControllerRA {
 
     //4.	Inserção de produto retorna 422 e mensagens customizadas com dados inválidos quando logado como admin e campo price for negativo
     @Test
-    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndPriceIsNegative(){
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndPriceIsNegative() {
         postProductInstance.put("price", -50.0);
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
@@ -266,8 +266,8 @@ public class ProductControllerRA {
         given()
                 //Definindo o cabeçalho da requisição
                 //Tipo da informação
-                .header("Content-type","application/json")
-                .header("Authorization","Bearer " + adminToken)
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
                 .body(newProduct.toString())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -283,7 +283,7 @@ public class ProductControllerRA {
 
     //5.	Inserção de produto retorna 422 e mensagens customizadas com dados inválidos quando logado como admin e campo price for zero
     @Test
-    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndPriceIsZero(){
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndPriceIsZero() {
         postProductInstance.put("price", 0);
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
@@ -291,8 +291,8 @@ public class ProductControllerRA {
         given()
                 //Definindo o cabeçalho da requisição
                 //Tipo da informação
-                .header("Content-type","application/json")
-                .header("Authorization","Bearer " + adminToken)
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
                 .body(newProduct.toString())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -308,7 +308,7 @@ public class ProductControllerRA {
 
     //6.	Inserção de produto retorna 422 e mensagens customizadas com dados inválidos quando logado como admin e não tiver categoria associada
     @Test
-    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndProductHasNotCategory(){
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndProductHasNotCategory() {
         postProductInstance.put("categories", null);
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
@@ -316,8 +316,8 @@ public class ProductControllerRA {
         given()
                 //Definindo o cabeçalho da requisição
                 //Tipo da informação
-                .header("Content-type","application/json")
-                .header("Authorization","Bearer " + adminToken)
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
                 .body(newProduct.toString())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -333,15 +333,15 @@ public class ProductControllerRA {
 
     //7.	Inserção de produto retorna 403 quando logado como cliente
     @Test
-    public void insertShouldReturnForbiddenWhenClientLogged(){
+    public void insertShouldReturnForbiddenWhenClientLogged() {
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
 
         given()
                 //Definindo o cabeçalho da requisição
                 //Tipo da informação
-                .header("Content-type","application/json")
-                .header("Authorization","Bearer " + clientToken)
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + clientToken)
                 .body(newProduct.toString())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -355,15 +355,15 @@ public class ProductControllerRA {
 
     //8.	Inserção de produto retorna 401 quando não logado como admin ou cliente
     @Test
-    public void insertShouldReturnUnauthorizedWhenInvalidToken(){
+    public void insertShouldReturnUnauthorizedWhenInvalidToken() {
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
 
         given()
                 //Definindo o cabeçalho da requisição
                 //Tipo da informação
-                .header("Content-type","application/json")
-                .header("Authorization","Bearer " + invalidToken)
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + invalidToken)
                 .body(newProduct.toString())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -375,4 +375,81 @@ public class ProductControllerRA {
                 .statusCode(401);
     }
 
+    /*Problema 4: Deletar produto
+
+    Implemente os testes de API usando Rest Assured para deleção de produto (método DELETE do ProductController), considerando os seguintes cenários. Lembre-se de inserir o token no cabeçalho da requisição.
+    1.	Deleção de produto deleta produto existente quando logado como admin
+    2.	Deleção de produto retorna 404 para produto inexistente quando logado como admin
+    3.	Deleção de produto retorna 400 para produto dependente quando logado como admin
+    4.	Deleção de produto retorna 403 quando logado como cliente
+    5.	Deleção de produto retorna 401 quando não logado como admin ou cliente
+
+    * */
+
+    //1.	Deleção de produto deleta produto existente quando logado como admin
+    @Test
+    public void deleteShouldReturnNoContentWhenIdExistsAndAdminLogged() {
+        existingProductId = 25L;
+
+        given()
+            .header("Authorization", "Bearer " + adminToken)
+        .when()
+            .delete("/products/{id}", existingProductId)
+        .then()
+            .statusCode(204);
+    }
+
+    //2.	Deleção de produto retorna 404 para produto inexistente quando logado como admin
+    @Test
+    public void deleteShouldReturnNotFoundWhenIdDoesNotExistAndAdminLogged() {
+        nonExistingProductId = 100L;
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .when()
+                .delete("/products/{id}", nonExistingProductId)
+                .then()
+                .statusCode(404)
+                .body("error", equalTo("Recurso não encontrado"))
+                .body("status", equalTo(404));
+    }
+
+    //3.	Deleção de produto retorna 400 para produto dependente quando logado como admin
+    @Test
+    public void deleteShouldReturnBadRequestWhenDepedentIdAndAdminLogged() {
+        dependentProductId = 3L;
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .when()
+                .delete("/products/{id}", dependentProductId)
+                .then()
+                .statusCode(400);
+    }
+
+    //4.	Deleção de produto retorna 403 quando logado como cliente
+    @Test
+    public void deleteShouldReturnForbiddenWhenClientLogged() {
+        existingProductId = 25L;
+
+        given()
+                .header("Authorization", "Bearer " + clientToken)
+                .when()
+                .delete("/products/{id}", existingProductId)
+                .then()
+                .statusCode(403);
+    }
+
+    //5.	Deleção de produto retorna 401 quando não logado como admin ou cliente
+    @Test
+    public void deleteShouldReturnUnauthorizedWhenInvalidToken() {
+        existingProductId = 25L;
+
+        given()
+                .header("Authorization", "Bearer " + invalidToken)
+                .when()
+                .delete("/products/{id}", existingProductId)
+                .then()
+                .statusCode(401);
+    }
 }
