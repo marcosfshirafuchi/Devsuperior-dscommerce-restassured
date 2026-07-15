@@ -27,7 +27,7 @@ public class ProductControllerRA {
     private Map<String, Object> postProductInstance;
 
     @BeforeEach
-    public void sertUp() {
+    public void setUp() {
         //Endereço que vai estar hospedado o serviço
         baseURI = "http://localhost:8080";
 
