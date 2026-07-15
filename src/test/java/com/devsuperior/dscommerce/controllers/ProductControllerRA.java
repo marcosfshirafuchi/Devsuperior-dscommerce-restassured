@@ -1,5 +1,6 @@
 package com.devsuperior.dscommerce.controllers;
 
+import com.devsuperior.dscommerce.tests.TokenUtil;
 import io.restassured.http.ContentType;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,8 @@ import static org.hamcrest.Matchers.*;
 
 public class ProductControllerRA {
 
+    private String clientUsername, clientPassword, adminUsername, adminPassword;
+    private String clientToken, adminToken, invalidToken;
     private Long existingProductId, nonExistingProductId;
 
     private String productName;
@@ -27,7 +30,20 @@ public class ProductControllerRA {
     public void sertUp() {
         //Endereço que vai estar hospedado o serviço
         baseURI = "http://localhost:8080";
+
+        clientUsername = "maria@gmail.com";
+        clientPassword = "123456";
+        adminUsername = "alex@gmail.com";
+        adminPassword = "123456";
+
+        clientToken = TokenUtil.obtainAccessToken(clientUsername, clientPassword);
+        adminToken = TokenUtil.obtainAccessToken(adminUsername, adminPassword);
+        invalidToken = adminToken + "xpto"; // Invalid Token
+
+        System.out.println("Admin Token: " + adminToken); // Adicionado para depuração
+
         productName = "Macbook";
+
         postProductInstance = new HashMap<>();
         postProductInstance.put("name", "Meu produto");
         postProductInstance.put("description", "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Qui ad, adipisci illum ipsam velit et odit eaque reprehenderit ex maxime delectus dolore labore, quisquam quae tempora natus esse aliquam veniam doloremque quam minima culpa alias maiores commodi. Perferendis enim");
@@ -169,14 +185,13 @@ public class ProductControllerRA {
     public void insertShouldReturnProductCreatedWhenAdminLogged(){
         //Criar o objeto JSON
         JSONObject newProduct = new JSONObject(postProductInstance);
-        String adminToken = "";
 
         given()
            //Definindo o cabeçalho da requisição
            //Tipo da informação
            .header("Content-type","application/json")
            .header("Authorization","Bearer " + adminToken)
-           .body(newProduct)
+           .body(newProduct.toString())
            .contentType(ContentType.JSON)
            .accept(ContentType.JSON)
         .when()
@@ -187,8 +202,8 @@ public class ProductControllerRA {
            .statusCode(201)
            .body("name", equalTo("Meu produto"))
                 .body("price", is(50.0F))
-                .body("imgUrl", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/"))
-                .body("categories", hasItems(2,3));
+                .body("imgUrl", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/1-big.jpg"))
+                .body("categories.id", hasItems(2,3));
     }
 
     //2.	Inserção de produto retorna 422 e mensagens customizadas com dados inválidos quando logado como admin e campo name for inválido
